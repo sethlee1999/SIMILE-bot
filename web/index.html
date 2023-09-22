@@ -1,0 +1,105 @@
+<html>
+<head>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" crossorigin=""/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster-src.js" crossorigin=""></script>
+    <script
+            src="https://code.jquery.com/jquery-2.2.4.min.js"
+            integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+            crossorigin="anonymous"></script>
+    <script src="js/moment.js"></script>
+    <style>
+        .mycluster {
+            width: 40px;
+            height: 40px;
+            background-color: greenyellow;
+            text-align: center;
+            font-size: 24px;
+        }
+
+    </style>
+</head>
+<body style="margin: 0">
+    <div id="map" style="width: 100%;height: 100%"></div>
+<script>
+    var myIcon = L.icon({
+        iconUrl: './img/info.svg',
+        iconSize: [40, 40]
+    });
+    // generate a map from leaflet
+    var map = L.map('map').setView([46.1385446161868, 9.00722770500954], 8);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    const flattenJSON = (obj = {}, res = {}, extraKey = '') => {
+        for(key in obj){
+            if(typeof obj[key] !== 'object'){
+                res[extraKey + key] = obj[key];
+            }else{
+                flattenJSON(obj[key], res, `${extraKey}${key}.`);
+            };
+        };
+        return res;
+    };
+    function getObservation(){
+        var settings = {
+            "url": "https://api-simile.como.polimi.it/v1/observations/",
+            "method": "GET",
+            "timeout": 0,
+        };
+
+        $.ajax(settings).done(function (response) {
+            const data = response.data;
+            var markers = L.markerClusterGroup({ animateAddingMarkers : true });
+            for(var i in data){
+                const _data = data[i];
+                // time
+                const timeTz = moment(_data['date']).format('LLL');
+                var insertContent = 'Insert time: '+timeTz+'<br>';
+                // photo
+                var photoLink = './gallery.html?';
+                for(var n in _data['photos']){
+                    photoLink+='p'+n+'='+_data['photos'][n]+'&';
+                }
+                console.log(_data)
+                insertContent+='Photos: <a target="view_window" href="'+photoLink+'">Click here</a><br>';
+                // weather
+                insertContent+='Weather: <br>&nbsp;&nbsp;Temperature: '+_data['weather']['temperature']+'&#8451<br>&nbsp;&nbsp;Wind: '+_data['weather']['wind']+'<br>&nbsp;&nbsp;Sky: '+_data['weather']['sky']['description']+'<br>';
+                // details
+                var detailContent = 'Details: <br>';
+                for (var n in _data['details']){
+                    detailContent+='&nbsp;&nbsp;'+n+': <br>';
+                    for(var x in _data['details'][n]){
+                        const flattenData = flattenJSON(_data['details'][n][x]);
+                        if(flattenData.length===0){
+                            detailContent+='&nbsp;&nbsp;&nbsp;&nbsp;'+x+': '+_data['details'][n][x]+'<br>'
+                        }
+                        else{
+                            for(var y in flattenData){
+                                if(y.indexOf('description')!==-1){
+                                    detailContent+='&nbsp;&nbsp;&nbsp;&nbsp;'+x+': '+flattenData[y]+'<br>'
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if('details' in _data){
+                    insertContent+=detailContent;
+                }
+                markers.addLayer(L.marker({lng: _data.position.coordinates[0], lat: _data.position.coordinates[1]},{icon:myIcon}).bindPopup(insertContent));
+            }
+            map.addLayer(markers);
+        });
+    }
+    getObservation();
+</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<html>
+<head>
+    <style>
+        div.gallery {
+            margin: 5px;
+            border: 1px solid #ccc;
+            float: left;
+            width: 180px;
+        }
+
+        div.gallery:hover {
+            border: 1px solid #777;
+        }
+
+        div.gallery img {
+            width: 100%;
+            height: auto;
+        }
+
+        div.desc {
+            padding: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+</body>
+<script>
+    function getQueryVariable(variable)
+    {
+        var query = window.location.search.substring(1);
+        var vars = query.split("&");
+        for (var i=0;i<vars.length;i++) {
+            var pair = vars[i].split("=");
+            if(pair[0] == variable){return pair[1];}
+        }
+        return false;
+    }
+    var content = '';
+    const p0 = getQueryVariable('p0');
+    const p1 = getQueryVariable('p1');
+    const p2 = getQueryVariable('p2');
+    if(p0){
+        const link = 'https://api-simile.como.polimi.it/'+p0;
+        content += '<div class="gallery"><a target="_blank" href="'+link+'"><img src="'+link+'" alt="Photo 1" height="400"></a><div class="desc">Photo 1</div></div>'
+    }
+    if(p1){
+        const link = 'https://api-simile.como.polimi.it/'+p1;
+        content += '<div class="gallery"><a target="_blank" href="'+link+'"><img src="'+link+'" alt="Photo 2" height="400"></a><div class="desc">Photo 2</div></div>'
+    }
+    if(p2){
+        const link = 'https://api-simile.como.polimi.it/'+p2;
+        content += '<div class="gallery"><a target="_blank" href="'+link+'"><img src="'+link+'" alt="Photo 3" height="400"></a><div class="desc">Photo 3</div></div>'
+    }
+    document.getElementsByTagName("BODY")[0].innerHTML = content;
+</script>
+</html>
